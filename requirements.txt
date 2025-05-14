@@ -1,0 +1,5 @@
+matplotlib
+numpy
+pylsl
+pyqt5
+frenztoolkit        # make sure to install the lastest version
