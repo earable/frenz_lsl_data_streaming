@@ -6,12 +6,12 @@ import matplotlib.animation as animation
 
 # ======= Configuration for each signal type =======
 stream_types = {
-    # 'EEG_raw': {'channels': 6, 'buffer_size': 100},
-    # 'PPG_raw': {'channels': 3, 'buffer_size': 100},
-    # 'IMU_raw': {'channels': 3, 'buffer_size': 100},
-    # 'EEG_filtered': {'channels': 4, 'buffer_size': 100},
-    # 'EOG_filtered': {'channels': 4, 'buffer_size': 100},
-    # 'EMG_filtered': {'channels': 4, 'buffer_size': 100},
+    # 'EEG_raw': {'channels': 6, 'buffer_size': 500},
+    # 'PPG_raw': {'channels': 3, 'buffer_size': 500},
+    # 'IMU_raw': {'channels': 3, 'buffer_size': 500},
+    # 'EEG_filtered': {'channels': 4, 'buffer_size': 500},
+    # 'EOG_filtered': {'channels': 4, 'buffer_size': 500},
+    # 'EMG_filtered': {'channels': 4, 'buffer_size': 500},
     # 'Posture': {'channels': 1, 'buffer_size': 1},
     # 'PoAS': {'channels': 1, 'buffer_size': 100},
     # 'SleepStage': {'channels': 1, 'buffer_size':100},
