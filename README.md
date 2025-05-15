@@ -108,14 +108,14 @@ File: `lsl_data_streaming.py`
 To stream new brainwave data:
 
 ```python
-from pylsl import StreamInfo, StreamOutlet
+from pylsl import StreamInfo, StreamOutlet, cf_string, cf_double64
 
 info = StreamInfo(
     name='brainwave_stream',
     type='EEG',
     channel_count=6,
     nominal_srate=125,
-    channel_format='float32',
+    channel_format=cf_double64,
     source_id='brainband_001'
 )
 

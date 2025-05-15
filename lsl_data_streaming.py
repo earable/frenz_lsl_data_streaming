@@ -7,7 +7,7 @@ os.environ["LSL_NO_MULCAST"] = "1"
 from frenztoolkit import Streamer
 import time
 import datetime
-from pylsl import StreamInfo, StreamOutlet, cf_string
+from pylsl import StreamInfo, StreamOutlet, cf_string, cf_double64
 
 frenz_device_id = "FRENZXXX"
 frenz_product_key = "YYY"
@@ -21,7 +21,7 @@ info__raw_eeg = StreamInfo(
     type='EEG_raw',
     channel_count=6,
     nominal_srate=125,
-    channel_format='float32',
+    channel_format=cf_double64,
     source_id=f'eeg_raw_{frenz_device_id}_{timeinterval}'
 )
 outlet_raw_eeg = StreamOutlet(info__raw_eeg)
@@ -32,7 +32,7 @@ info__raw_ppg = StreamInfo(
     type='PPG_raw',
     channel_count=3,
     nominal_srate=25,
-    channel_format='float32',
+    channel_format=cf_double64,
     source_id=f'ppg_raw_{frenz_device_id}_{timeinterval}'
 )
 outlet_raw_ppg = StreamOutlet(info__raw_ppg)
@@ -43,7 +43,7 @@ info__raw_imu = StreamInfo(
     type='IMU_raw',
     channel_count=3,
     nominal_srate=50,
-    channel_format='float32',
+    channel_format=cf_double64,
     source_id=f'imu_raw_{frenz_device_id}_{timeinterval}'
 )
 outlet_raw_imu = StreamOutlet(info__raw_imu)
@@ -54,7 +54,7 @@ info__filtered_eeg = StreamInfo(
     type='EEG_filtered',
     channel_count=4,
     nominal_srate=125,
-    channel_format='float32',
+    channel_format=cf_double64,
     source_id=f'eeg_filtered_{frenz_device_id}_{timeinterval}'
 )
 outlet_filtered_eeg = StreamOutlet(info__filtered_eeg)
@@ -65,7 +65,7 @@ info__filtered_eog = StreamInfo(
     type='EOG_filtered',
     channel_count=4,
     nominal_srate=125,
-    channel_format='float32',
+    channel_format=cf_double64,
     source_id=f'eog_filtered_{frenz_device_id}_{timeinterval}'
 )
 outlet_filtered_eog = StreamOutlet(info__filtered_eog)
@@ -76,7 +76,7 @@ info__filtered_emg = StreamInfo(
     type='EMG_filtered',
     channel_count=4,
     nominal_srate=125,
-    channel_format='float32',
+    channel_format=cf_double64,
     source_id=f'emg_filtered_{frenz_device_id}_{timeinterval}'
 )
 outlet_filtered_emg = StreamOutlet(info__filtered_emg)
@@ -87,7 +87,7 @@ info_posture = StreamInfo(
     type='Posture',
     channel_count=1,
     nominal_srate=0.2,
-    channel_format='string',
+    channel_format=cf_string,
     source_id=f'posture_{frenz_device_id}_{timeinterval}'
 )
 outlet_posture = StreamOutlet(info_posture)
