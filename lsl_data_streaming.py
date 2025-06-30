@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 # Prevent LSL from using IPv6 and multicast to avoid warnings
 os.environ["LSL_NO_IPV6"] = "1"
@@ -19,7 +20,7 @@ timeinterval = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 info__raw_eeg = StreamInfo(
     name=f'{frenz_device_id}_EEG_raw',
     type='EEG_raw',
-    channel_count=6,
+    channel_count=7,
     nominal_srate=125,
     channel_format=cf_double64,
     source_id=f'eeg_raw_{frenz_device_id}_{timeinterval}'
@@ -30,7 +31,7 @@ outlet_raw_eeg = StreamOutlet(info__raw_eeg)
 info__raw_ppg = StreamInfo(
     name=f'{frenz_device_id}_PPG_raw',
     type='PPG_raw',
-    channel_count=3,
+    channel_count=4,
     nominal_srate=25,
     channel_format=cf_double64,
     source_id=f'ppg_raw_{frenz_device_id}_{timeinterval}'
@@ -41,7 +42,7 @@ outlet_raw_ppg = StreamOutlet(info__raw_ppg)
 info__raw_imu = StreamInfo(
     name=f'{frenz_device_id}_IMU_raw',
     type='IMU_raw',
-    channel_count=3,
+    channel_count=4,
     nominal_srate=50,
     channel_format=cf_double64,
     source_id=f'imu_raw_{frenz_device_id}_{timeinterval}'
@@ -202,6 +203,7 @@ streamer.start()
 
 # MARK: Streaming loop
 # Channel description:
+# TIMESTAMP: timestamp in seconds
 # LF: left forehead
 # OTEL: over the ear right
 # REF1: left reference
@@ -224,24 +226,78 @@ try:
             break
 
         # EEG raw data
-        # Channel order: LF, OTEL, REF1, RF, OTER, REF2 (REF1 = REF2 = 0 not used)
+        # Channel order: TIMESTAMP, LF, OTEL, REF1, RF, OTER, REF2 (REF1 = REF2 = 0 not used)
         eeg_raw = streamer.DATA["RAW"]["EEG"]
         if eeg_raw.shape[0] > 0:
-            outlet_raw_eeg.push_chunk(eeg_raw.copy()[-125:, :].tolist())
+            # Ensure we have exactly 6 channels for EEG data
+            if eeg_raw.shape[1] != 6:
+                if eeg_raw.shape[1] < 6:
+                    # Pad with zeros if we have fewer channels
+                    padding = np.zeros((eeg_raw.shape[0], 6 - eeg_raw.shape[1]))
+                    eeg_raw = np.hstack((eeg_raw, padding))
+                else:
+                    # Truncate if we have more channels
+                    eeg_raw = eeg_raw[:, :6]
+            
+            # Add timestamp as first channel
+            timestamps = np.array([[time.time()] * eeg_raw.shape[0]]).T
+            eeg_raw_with_timestamp = np.hstack((timestamps, eeg_raw))
+            
+            # Ensure the final data has exactly 7 channels (timestamp + 6 EEG channels)
+            if eeg_raw_with_timestamp.shape[1] != 7:
+                continue
+                
+            outlet_raw_eeg.push_chunk(eeg_raw_with_timestamp.copy()[-125:, :].tolist())
         print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | EEG raw: {eeg_raw.shape}")
 
         # PPG raw data
-        # Channel order: GREEN, RED, INFRARED
+        # Channel order: TIMESTAMP, GREEN, RED, INFRARED
         ppg_raw = streamer.DATA["RAW"]["PPG"]
         if ppg_raw.shape[0] > 0:
-            outlet_raw_ppg.push_chunk(ppg_raw.copy()[-25:, :].tolist())
+            # Ensure we have exactly 3 channels for PPG data (GREEN, RED, INFRARED)
+            if ppg_raw.shape[1] != 3:
+                if ppg_raw.shape[1] < 3:
+                    # Pad with zeros if we have fewer channels
+                    padding = np.zeros((ppg_raw.shape[0], 3 - ppg_raw.shape[1]))
+                    ppg_raw = np.hstack((ppg_raw, padding))
+                else:
+                    # Truncate if we have more channels
+                    ppg_raw = ppg_raw[:, :3]
+            
+            # Add timestamp as first channel
+            timestamps = np.array([[time.time()] * ppg_raw.shape[0]]).T
+            ppg_raw_with_timestamp = np.hstack((timestamps, ppg_raw))
+            
+            # Ensure the final data has exactly 4 channels (timestamp + 3 PPG channels)
+            if ppg_raw_with_timestamp.shape[1] != 4:
+                continue
+                
+            outlet_raw_ppg.push_chunk(ppg_raw_with_timestamp.copy()[-25:, :].tolist())
         print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | PPG raw: {ppg_raw.shape}")
 
         # IMU raw data
-        # Channel order: X, Y, Z
+        # Channel order: TIMESTAMP, X, Y, Z
         imu_raw = streamer.DATA["RAW"]["IMU"]
         if imu_raw.shape[0] > 0:
-            outlet_raw_imu.push_chunk(imu_raw.copy()[-50:, :].tolist())
+            # Ensure we have exactly 3 channels for IMU data (X, Y, Z)
+            if imu_raw.shape[1] != 3:
+                if imu_raw.shape[1] < 3:
+                    # Pad with zeros if we have fewer channels
+                    padding = np.zeros((imu_raw.shape[0], 3 - imu_raw.shape[1]))
+                    imu_raw = np.hstack((imu_raw, padding))
+                else:
+                    # Truncate if we have more channels
+                    imu_raw = imu_raw[:, :3]
+            
+            # Add timestamp as first channel
+            timestamps = np.array([[time.time()] * imu_raw.shape[0]]).T
+            imu_raw_with_timestamp = np.hstack((timestamps, imu_raw))
+            
+            # Ensure the final data has exactly 4 channels (timestamp + 3 IMU channels)
+            if imu_raw_with_timestamp.shape[1] != 4:
+                continue
+                
+            outlet_raw_imu.push_chunk(imu_raw_with_timestamp.copy()[-50:, :].tolist())
         print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | IMU raw: {imu_raw.shape}")
 
         # EEG filtered data
@@ -249,6 +305,16 @@ try:
         # unit: uV
         eeg_filtered = streamer.DATA["FILTERED"]["EEG"].T
         if eeg_filtered.shape[0] > 0:
+            # Ensure we have exactly 4 channels for filtered EEG data
+            if eeg_filtered.shape[1] != 4:
+                if eeg_filtered.shape[1] < 4:
+                    # Pad with zeros if we have fewer channels
+                    padding = np.zeros((eeg_filtered.shape[0], 4 - eeg_filtered.shape[1]))
+                    eeg_filtered = np.hstack((eeg_filtered, padding))
+                else:
+                    # Truncate if we have more channels
+                    eeg_filtered = eeg_filtered[:, :4]
+            
             outlet_filtered_eeg.push_chunk(eeg_filtered.copy()[-125:, :].tolist())
         print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | EEG filtered: {eeg_filtered.shape}")
 
@@ -257,6 +323,16 @@ try:
         # unit: uV
         eog_filtered = streamer.DATA["FILTERED"]["EOG"].T
         if eog_filtered.shape[0] > 0:
+            # Ensure we have exactly 4 channels for filtered EOG data
+            if eog_filtered.shape[1] != 4:
+                if eog_filtered.shape[1] < 4:
+                    # Pad with zeros if we have fewer channels
+                    padding = np.zeros((eog_filtered.shape[0], 4 - eog_filtered.shape[1]))
+                    eog_filtered = np.hstack((eog_filtered, padding))
+                else:
+                    # Truncate if we have more channels
+                    eog_filtered = eog_filtered[:, :4]
+            
             outlet_filtered_eog.push_chunk(eog_filtered.copy()[-125:, :].tolist())
         print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | EOG filtered: {eog_filtered.shape}")
 
@@ -265,6 +341,16 @@ try:
         # unit: uV
         emg_filtered = streamer.DATA["FILTERED"]["EMG"].T
         if emg_filtered.shape[0] > 0:
+            # Ensure we have exactly 4 channels for filtered EMG data
+            if emg_filtered.shape[1] != 4:
+                if emg_filtered.shape[1] < 4:
+                    # Pad with zeros if we have fewer channels
+                    padding = np.zeros((emg_filtered.shape[0], 4 - emg_filtered.shape[1]))
+                    emg_filtered = np.hstack((emg_filtered, padding))
+                else:
+                    # Truncate if we have more channels
+                    emg_filtered = emg_filtered[:, :4]
+            
             outlet_filtered_emg.push_chunk(emg_filtered.copy()[-125:, :].tolist())
         print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | EMG filtered: {emg_filtered.shape}")
 
@@ -301,7 +387,16 @@ try:
         # value 0 - not good; value 1 - good
         signal_quality = streamer.SCORES.get("sqc_scores")
         if signal_quality is not None:
-            outlet_signal_quality.push_chunk(list(signal_quality))
+            # Ensure we have exactly 4 channels for signal quality data
+            if len(signal_quality) != 4:
+                if len(signal_quality) < 4:
+                    # Pad with zeros if we have fewer channels
+                    signal_quality = list(signal_quality) + [0] * (4 - len(signal_quality))
+                else:
+                    # Truncate if we have more channels
+                    signal_quality = list(signal_quality[:4])
+            
+            outlet_signal_quality.push_chunk([signal_quality])
         print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | Signal quality: {signal_quality}")
 
         # Alpha data

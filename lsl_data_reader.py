@@ -6,9 +6,9 @@ import matplotlib.animation as animation
 
 # ======= Configuration for each signal type =======
 stream_types = {
-    # 'EEG_raw': {'channels': 6, 'buffer_size': 500},
-    # 'PPG_raw': {'channels': 3, 'buffer_size': 500},
-    # 'IMU_raw': {'channels': 3, 'buffer_size': 500},
+    'EEG_raw': {'channels': 7, 'buffer_size': 500},  # Updated from 6 to 7 channels (timestamp + 6 EEG channels)
+    'PPG_raw': {'channels': 4, 'buffer_size': 500},  # Updated from 3 to 4 channels (timestamp + 3 PPG channels)
+    'IMU_raw': {'channels': 4, 'buffer_size': 500},  # Updated from 3 to 4 channels (timestamp + 3 IMU channels)
     # 'EEG_filtered': {'channels': 4, 'buffer_size': 500},
     # 'EOG_filtered': {'channels': 4, 'buffer_size': 500},
     # 'EMG_filtered': {'channels': 4, 'buffer_size': 500},
@@ -20,7 +20,7 @@ stream_types = {
     # 'Alpha': {'channels': 5, 'buffer_size':100},
     # 'Beta': {'channels': 5, 'buffer_size':100},
     # 'Gamma': {'channels': 5, 'buffer_size':100},
-    'Delta': {'channels': 5, 'buffer_size':100},
+    # 'Delta': {'channels': 5, 'buffer_size':100},
     # 'Theta': {'channels': 5, 'buffer_size':100},
 }
 
@@ -58,7 +58,41 @@ for stype, config in stream_types.items():
             lines[stype].append(text)
         else:
             line, = ax.plot(buffers[stype][:, ch])
-            ax.set_ylabel(f"{stype} Ch{ch+1}", fontsize=8)
+            if stype == 'EEG_raw':
+                if ch == 0:
+                    ax.set_ylabel(f"{stype} Timestamp", fontsize=8)
+                elif ch == 1:
+                    ax.set_ylabel(f"{stype} LF", fontsize=8)
+                elif ch == 2:
+                    ax.set_ylabel(f"{stype} OTEL", fontsize=8)
+                elif ch == 3:
+                    ax.set_ylabel(f"{stype} REF1", fontsize=8)
+                elif ch == 4:
+                    ax.set_ylabel(f"{stype} RF", fontsize=8)
+                elif ch == 5:
+                    ax.set_ylabel(f"{stype} OTER", fontsize=8)
+                elif ch == 6:
+                    ax.set_ylabel(f"{stype} REF2", fontsize=8)
+            elif stype == 'PPG_raw':
+                if ch == 0:
+                    ax.set_ylabel(f"{stype} Timestamp", fontsize=8)
+                elif ch == 1:
+                    ax.set_ylabel(f"{stype} GREEN", fontsize=8)
+                elif ch == 2:
+                    ax.set_ylabel(f"{stype} RED", fontsize=8)
+                elif ch == 3:
+                    ax.set_ylabel(f"{stype} INFRARED", fontsize=8)
+            elif stype == 'IMU_raw':
+                if ch == 0:
+                    ax.set_ylabel(f"{stype} Timestamp", fontsize=8)
+                elif ch == 1:
+                    ax.set_ylabel(f"{stype} X", fontsize=8)
+                elif ch == 2:
+                    ax.set_ylabel(f"{stype} Y", fontsize=8)
+                elif ch == 3:
+                    ax.set_ylabel(f"{stype} Z", fontsize=8)
+            else:
+                ax.set_ylabel(f"{stype} Ch{ch+1}", fontsize=8)
             axes_dict[stype].append(ax)
             lines[stype].append(line)
         plot_idx += 1

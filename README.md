@@ -25,33 +25,58 @@ Please contact **Earable's sales department** to obtain one.
 
 ## 🖥️ System Requirements
 
-Before using the toolkit, ensure the following:
+Before using the toolkit, ensure you have the following:
 
-- A **Frenz Brainband**
-- A **MacOS** laptop or desktop with **Bluetooth** and **internet**
-- A **valid product key**
-- A **Python 3.9** environment
+- A Frenz Brainband
+- A laptop/desktop (MacOS, Windows 64) with Bluetooth and internet connectivity
+- A product key (contact Earable's sales department if you don't have one)
+- Python 3.9 environment:
 
----
+Goto page: https://www.python.org/downloads/release/python-3913/
 
-## 🧪 Setting Up the Python Environment
+Choose your OS setup file:
 
-### 1. Check Python 3.9
+MacOS: https://www.python.org/ftp/python/3.9.13/python-3.9.13-macos11.pkg
 
+Windows 64: https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe
+
+### Check if Python 3.9 is installed
 ```bash
 python3.9 --version
 ```
-
-### 2. Create a Virtual Environment
+or
 
 ```bash
-python3.9 -m venv myenv
+python --version
 ```
 
-### 3. Activate the Environment (macOS)
+Result:
+
+Python 3.9.xx
+
+### Create new virtual environment
+```bash
+python3.9 -m venv vir_name
+```
+or
 
 ```bash
-source myenv/bin/activate
+python -m venv vir_name
+```
+
+### Environment activation:
+### MacOS
+```bash
+source vir_name/bin/activate  
+```
+
+### Windows 64 OS
+```bash
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+```
+
+```bash
+.\vir_name\Scripts\Activate.ps1
 ```
 
 ---
@@ -113,7 +138,7 @@ from pylsl import StreamInfo, StreamOutlet, cf_string, cf_double64
 info = StreamInfo(
     name='brainwave_stream',
     type='EEG',
-    channel_count=6,
+    channel_count=7,
     nominal_srate=125,
     channel_format=cf_double64,
     source_id='brainband_001'
