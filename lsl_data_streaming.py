@@ -227,78 +227,72 @@ try:
 
         # EEG raw data
         # Channel order: TIMESTAMP, LF, OTEL, REF1, RF, OTER, REF2 (REF1 = REF2 = 0 not used)
+        # Note: streamer.DATA["RAW"]["EEG"] already includes timestamp as first column
         eeg_raw = streamer.DATA["RAW"]["EEG"]
         if eeg_raw.shape[0] > 0:
-            # Ensure we have exactly 6 channels for EEG data
-            if eeg_raw.shape[1] != 6:
-                if eeg_raw.shape[1] < 6:
+            # Ensure we have exactly 7 channels (TIMESTAMP + 6 EEG channels: LF, OTEL, REF1, RF, OTER, REF2)
+            if eeg_raw.shape[1] != 7:
+                if eeg_raw.shape[1] < 7:
                     # Pad with zeros if we have fewer channels
-                    padding = np.zeros((eeg_raw.shape[0], 6 - eeg_raw.shape[1]))
+                    padding = np.zeros((eeg_raw.shape[0], 7 - eeg_raw.shape[1]))
                     eeg_raw = np.hstack((eeg_raw, padding))
                 else:
                     # Truncate if we have more channels
-                    eeg_raw = eeg_raw[:, :6]
+                    eeg_raw = eeg_raw[:, :7]
             
-            # Add timestamp as first channel
-            timestamps = np.array([[time.time()] * eeg_raw.shape[0]]).T
-            eeg_raw_with_timestamp = np.hstack((timestamps, eeg_raw))
-            
-            # Ensure the final data has exactly 7 channels (timestamp + 6 EEG channels)
-            if eeg_raw_with_timestamp.shape[1] != 7:
-                continue
-                
-            outlet_raw_eeg.push_chunk(eeg_raw_with_timestamp.copy()[-125:, :].tolist())
-        print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | EEG raw: {eeg_raw.shape}")
+            # Push chunk: take last 125 samples (1 second at 125 Hz) or all available if less
+            chunk_size = min(125, eeg_raw.shape[0])
+            chunk_data = eeg_raw[-chunk_size:, :].copy()
+            outlet_raw_eeg.push_chunk(chunk_data.tolist())
+            print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | EEG raw: {eeg_raw.shape} | Pushed: {chunk_size} samples")
+        else:
+            print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | EEG raw: no data")
 
         # PPG raw data
         # Channel order: TIMESTAMP, GREEN, RED, INFRARED
+        # Note: streamer.DATA["RAW"]["PPG"] already includes timestamp as first column
         ppg_raw = streamer.DATA["RAW"]["PPG"]
         if ppg_raw.shape[0] > 0:
-            # Ensure we have exactly 3 channels for PPG data (GREEN, RED, INFRARED)
-            if ppg_raw.shape[1] != 3:
-                if ppg_raw.shape[1] < 3:
+            # Ensure we have exactly 4 channels (TIMESTAMP + 3 PPG channels: GREEN, RED, INFRARED)
+            if ppg_raw.shape[1] != 4:
+                if ppg_raw.shape[1] < 4:
                     # Pad with zeros if we have fewer channels
-                    padding = np.zeros((ppg_raw.shape[0], 3 - ppg_raw.shape[1]))
+                    padding = np.zeros((ppg_raw.shape[0], 4 - ppg_raw.shape[1]))
                     ppg_raw = np.hstack((ppg_raw, padding))
                 else:
                     # Truncate if we have more channels
-                    ppg_raw = ppg_raw[:, :3]
+                    ppg_raw = ppg_raw[:, :4]
             
-            # Add timestamp as first channel
-            timestamps = np.array([[time.time()] * ppg_raw.shape[0]]).T
-            ppg_raw_with_timestamp = np.hstack((timestamps, ppg_raw))
-            
-            # Ensure the final data has exactly 4 channels (timestamp + 3 PPG channels)
-            if ppg_raw_with_timestamp.shape[1] != 4:
-                continue
-                
-            outlet_raw_ppg.push_chunk(ppg_raw_with_timestamp.copy()[-25:, :].tolist())
-        print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | PPG raw: {ppg_raw.shape}")
+            # Push chunk: take last 25 samples (1 second at 25 Hz) or all available if less
+            chunk_size = min(25, ppg_raw.shape[0])
+            chunk_data = ppg_raw[-chunk_size:, :].copy()
+            outlet_raw_ppg.push_chunk(chunk_data.tolist())
+            print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | PPG raw: {ppg_raw.shape} | Pushed: {chunk_size} samples")
+        else:
+            print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | PPG raw: no data")
 
         # IMU raw data
         # Channel order: TIMESTAMP, X, Y, Z
+        # Note: streamer.DATA["RAW"]["IMU"] already includes timestamp as first column
         imu_raw = streamer.DATA["RAW"]["IMU"]
         if imu_raw.shape[0] > 0:
-            # Ensure we have exactly 3 channels for IMU data (X, Y, Z)
-            if imu_raw.shape[1] != 3:
-                if imu_raw.shape[1] < 3:
+            # Ensure we have exactly 4 channels (TIMESTAMP + 3 IMU channels: X, Y, Z)
+            if imu_raw.shape[1] != 4:
+                if imu_raw.shape[1] < 4:
                     # Pad with zeros if we have fewer channels
-                    padding = np.zeros((imu_raw.shape[0], 3 - imu_raw.shape[1]))
+                    padding = np.zeros((imu_raw.shape[0], 4 - imu_raw.shape[1]))
                     imu_raw = np.hstack((imu_raw, padding))
                 else:
                     # Truncate if we have more channels
-                    imu_raw = imu_raw[:, :3]
+                    imu_raw = imu_raw[:, :4]
             
-            # Add timestamp as first channel
-            timestamps = np.array([[time.time()] * imu_raw.shape[0]]).T
-            imu_raw_with_timestamp = np.hstack((timestamps, imu_raw))
-            
-            # Ensure the final data has exactly 4 channels (timestamp + 3 IMU channels)
-            if imu_raw_with_timestamp.shape[1] != 4:
-                continue
-                
-            outlet_raw_imu.push_chunk(imu_raw_with_timestamp.copy()[-50:, :].tolist())
-        print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | IMU raw: {imu_raw.shape}")
+            # Push chunk: take last 50 samples (1 second at 50 Hz) or all available if less
+            chunk_size = min(50, imu_raw.shape[0])
+            chunk_data = imu_raw[-chunk_size:, :].copy()
+            outlet_raw_imu.push_chunk(chunk_data.tolist())
+            print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | IMU raw: {imu_raw.shape} | Pushed: {chunk_size} samples")
+        else:
+            print(f"[{datetime.datetime.now()}] Duration: {streamer.session_dur:.2f}s | IMU raw: no data")
 
         # EEG filtered data
         # Channel order: LF, OTEL, RF, OTER
